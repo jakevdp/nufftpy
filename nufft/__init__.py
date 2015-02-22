@@ -1,1 +1,1 @@
-from .nufft import dirft1d, nufft1d
+from .nufft import nufft1d
