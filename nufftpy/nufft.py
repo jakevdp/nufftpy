@@ -7,8 +7,8 @@ def nufftfreqs(M, df=1):
     return df * np.arange(-(M // 2), M - (M // 2))
 
 
-def nufft1d(x, c, M, df=1.0, eps=1E-15, iflag=1,
-            direct=False, fast_gridding=True):
+def nufft1(x, c, M, df=1.0, eps=1E-15, iflag=1,
+           direct=False, fast_gridding=True):
     """Fast Non-Uniform Fourier Transform in 1 Dimension
 
     Compute the non-uniform FFT of one-dimensional points x with complex
