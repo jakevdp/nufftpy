@@ -7,7 +7,8 @@ def nufftfreqs(M, df=1):
     return df * np.arange(-(M // 2), M - (M // 2))
 
 
-def nufft1d(x, c, M, df=1.0, eps=1E-15, iflag=1, direct=False):
+def nufft1d(x, c, M, df=1.0, eps=1E-15, iflag=1,
+            direct=False, fast_gridding=True):
     """Fast Non-Uniform Fourier Transform in 1 Dimension
 
     Compute the non-uniform FFT of one-dimensional points x with complex
@@ -29,9 +30,12 @@ def nufft1d(x, c, M, df=1.0, eps=1E-15, iflag=1, direct=False):
     iflag : float
         if iflag<0, compute the transform with a negative exponent.
         if iflag>=0, compute the transform with a positive exponent.
-    direct : bool
+    direct : bool (default = False)
         If True, then use the slower (but more straightforward)
         direct Fourier transform to compute the result.
+    fast_gridding : bool (default = True)
+        If True, use the fast Gaussian grid algorithm of Greengard & Lee (2004)
+        Otherwise, use a more naive gridding approach
 
     Returns
     -------
@@ -71,15 +75,33 @@ def nufft1d(x, c, M, df=1.0, eps=1E-15, iflag=1, direct=False):
         tau = np.pi * lambda_ / M ** 2
 
         # Construct the convolved grid
-        # TODO: break-up exponential as in Greengard & Lee (2004)
         ftau = np.zeros(Mr, dtype=c.dtype)
         hx = 2 * np.pi / Mr
         xmod = (df * x) % (2 * np.pi)
-        m = (xmod // hx).astype(int) + 1 + np.arange(-Msp, Msp)[:, np.newaxis]
-        np.add.at(ftau, m % Mr, c * np.exp(-(xmod - hx * m) ** 2 / (4 * tau)))
+
+        m = 1 + (xmod // hx).astype(int)
+        msp = np.arange(-Msp, Msp)[:, np.newaxis]
+        mm = m + msp
+
+        if fast_gridding:
+            # Greengard & Lee (2004) approach
+            E1 = np.exp(-0.25 * (xmod - hx * m) ** 2 / tau)
+            
+            # Following basically computes this:
+            # E2 = np.exp(msp * (xmod - hx * m) * np.pi / (Mr * tau))
+            E2 = np.empty((2 * Msp, N), dtype=xmod.dtype)
+            E2[Msp] = 1
+            E2[Msp + 1:] = np.exp((xmod - hx * m) * np.pi / (Mr * tau))
+            E2[Msp + 1:].cumprod(0, out=E2[Msp + 1:])
+            E2[Msp - 1::-1] = 1. / (E2[Msp + 1] * E2[Msp:])
+            
+            E3 = np.exp(-(np.pi * msp / Mr) ** 2 / tau)
+            spread = (c * E1) * E2 * E3
+        else:
+            spread = c * np.exp(-0.25 * (xmod - hx * mm) ** 2 / tau)
+        np.add.at(ftau, mm % Mr, spread)
 
         # Compute the FFT on the convolved grid
-        # TODO: multiply ftau by phase to replace concatenation step
         if sign < 0:
             Ftau = (1 / Mr) * np.fft.fft(ftau)
         else:
