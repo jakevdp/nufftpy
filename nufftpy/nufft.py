@@ -2,12 +2,12 @@ from __future__ import division, print_function
 import numpy as np
 
 
-def nufft_freqs(M, df=1):
+def nufftfreqs(M, df=1):
     """Compute the frequency range used in nufft for M frequency bins"""
     return df * np.arange(-(M // 2), M - (M // 2))
 
 
-def nufft1d(x, c, M, df=1.0, iflag=-1, eps=1E-8, direct=False):
+def nufft1d(x, c, M, df=1.0, eps=1E-15, iflag=1, direct=False):
     """Fast Non-Uniform Fourier Transform in 1 Dimension
 
     Compute the non-uniform FFT of one-dimensional points x with complex
@@ -21,14 +21,14 @@ def nufft1d(x, c, M, df=1.0, iflag=-1, eps=1E-8, direct=False):
     M, df : int & float
         Parameters specifying the desired frequency grid. Transform will be
         computed at frequencies df * (-(M//2) + arange(M))
-    iflag : float
-        if iflag<0, compute the transform with a negative exponent.
-        if iflag>=0, compute the transform with a positive exponent.
     eps : float
         The desired approximate error for the FFT result. Must be in range
         1E-33 < eps < 1E-1, though be aware that the errors are only well
         calibrated near the range 1E-12 ~ 1E-6. eps is not referenced if
         direct = True.
+    iflag : float
+        if iflag<0, compute the transform with a negative exponent.
+        if iflag>=0, compute the transform with a positive exponent.
     direct : bool
         If True, then use the slower (but more straightforward)
         direct Fourier transform to compute the result.
@@ -40,7 +40,7 @@ def nufft1d(x, c, M, df=1.0, iflag=-1, eps=1E-8, direct=False):
 
     See Also
     --------
-    nufft_freqs : compute the frequencies of the nufft results
+    nufftfreqs : compute the frequencies of the nufft results
     """
     # Check inputs
     x = np.asarray(x, dtype=float)
@@ -54,7 +54,8 @@ def nufft1d(x, c, M, df=1.0, iflag=-1, eps=1E-8, direct=False):
 
     if direct:
         # Direct Fourier Transform: this is easy (but slow)
-        return np.dot(c, np.exp(sign * 1j * nufft_freqs(M, df) * x[:, None]))
+        return (1 / M) * np.dot(c, np.exp(sign * 1j *
+                                          nufftfreqs(M, df) * x[:, None]))
     else:
         # Fast Fourier Transform: this is more involved
         N = len(x)
@@ -86,5 +87,5 @@ def nufft1d(x, c, M, df=1.0, iflag=-1, eps=1E-8, direct=False):
         Ftau = np.concatenate([Ftau[-(M//2):], Ftau[:M//2 + M % 2]])
 
         # Deconvolve the grid using convolution theorem
-        k = nufft_freqs(M)
-        return np.sqrt(np.pi / tau) * np.exp(tau * k ** 2) * Ftau
+        k = nufftfreqs(M)
+        return (1 / M) * np.sqrt(np.pi / tau) * np.exp(tau * k ** 2) * Ftau
