@@ -16,6 +16,6 @@ def test_dirft_nufft_1d():
 
     for df in [0.5, 1.0, 2.0]:
         for iflag in [1, -1]:
-            for M in [100, 200]:
+            for M in [100, 101]:
                 for eps in [1E-8, 1E-12]:
                     yield check_results, df, iflag, M, eps
