@@ -12,7 +12,7 @@ def test_dirft_nufft_1d():
     def check_results(iflag, use_fft, M, eps):
         dft = dirft1d(x, c, M, iflag=iflag)
         fft = nufft1d(x, c, M, iflag=iflag, eps=eps, use_fft=use_fft)
-        assert_allclose(dft, fft, rtol=eps ** 0.8)
+        assert_allclose(dft, fft, rtol=eps ** 0.95)
 
     for use_fft in [True, False]:
         for iflag in [1, -1]:

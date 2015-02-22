@@ -32,14 +32,12 @@ def nufft1d(x, c, M, iflag=-1, eps=1E-8, use_fft=True):
     tau = np.pi * lambda_ / M ** 2
 
     # Construct the convolved grid
+    # TODO: break-up exponential as in Greengard & Lee (2004)
+    ftau = np.zeros(Mr, dtype=c.dtype)
     hx = 2 * np.pi / Mr
     xmod = x % (2 * np.pi)
-    m = (xmod // hx).astype(int)
-    mspread = np.arange(-Msp, Msp)
-    mm = (m + mspread[:, None])
-
-    ftau = np.zeros(Mr, dtype=c.dtype)
-    np.add.at(ftau, mm % Mr, c * np.exp(-(xmod - hx * mm) ** 2 / (4 * tau)))
+    m = (xmod // hx).astype(int) + 1 + np.arange(-Msp, Msp)[:, np.newaxis]
+    np.add.at(ftau, m % Mr, c * np.exp(-(xmod - hx * m) ** 2 / (4 * tau)))
             
     # Compute the DFT on the convolved grid
     k = compute_k(M)
