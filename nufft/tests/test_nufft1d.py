@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 def test_dirft_nufft_1d():
     rng = np.random.RandomState(0)
     x = 100 * rng.rand(100)
-    c = np.exp(1j * x) 
+    c = np.exp(1j * x)
 
     def check_results(df, iflag, M, eps):
         dft = nufft1d(x, c, M, iflag=iflag, direct=True)

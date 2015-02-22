@@ -25,18 +25,18 @@ def nufft1d(x, c, M, df=1.0, iflag=-1, eps=1E-8, direct=False):
         if iflag<0, compute the transform with a negative exponent.
         if iflag>=0, compute the transform with a positive exponent.
     eps : float
-        the desired approximate error for the FFT result. Must be in range
+        The desired approximate error for the FFT result. Must be in range
         1E-33 < eps < 1E-1, though be aware that the errors are only well
-        calibrated near the range 1E-12 ~ 1E-6.
+        calibrated near the range 1E-12 ~ 1E-6. eps is not referenced if
+        direct = True.
     direct : bool
-        If True, then use the slower (but more straightforward) direct Fourier
-        transform to compute the result. If direct method is used, then eps
-        is not referenced.
+        If True, then use the slower (but more straightforward)
+        direct Fourier transform to compute the result.
 
     Returns
     -------
     Fk : ndarray
-        The complex discrete Fourier transform 
+        The complex discrete Fourier transform
 
     See Also
     --------
@@ -52,17 +52,17 @@ def nufft1d(x, c, M, df=1.0, iflag=-1, eps=1E-8, direct=False):
     sign = -1 if iflag < 0 else 1
     M = int(M)
 
-    # For direct, compute the easy direct DFT, otherwise compute the NUFFT
     if direct:
+        # Direct Fourier Transform: this is easy (but slow)
         return np.dot(c, np.exp(sign * 1j * nufft_freqs(M, df) * x[:, None]))
     else:
-        # Validate the remaining inputs
+        # Fast Fourier Transform: this is more involved
         N = len(x)
         if eps <= 1E-33 or eps >= 1E-1:
             raise ValueError("eps = {0:.0e}; must satisfy "
                              "1e-33 < eps < 1e-1.".format(eps))
 
-        # Choose ratio, Msp, lambda, and tau following Dutt & Rokhlin (1993)
+        # Choose Msp & tau from eps following Dutt & Rokhlin (1993)
         ratio = 2 if eps > 1E-11 else 3
         Msp = int(-np.log(eps) / (np.pi * (ratio - 1) / (ratio - 0.5)) + 0.5)
         Mr = max(ratio * M, 2 * Msp)
