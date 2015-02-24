@@ -16,9 +16,8 @@ def nufftfreqs(M, df=1):
 
 
 def _check_inputs(x, c, df):
-    x = np.asarray(x, dtype=np.float)
-    x *= df
-    c = np.asarray(c, dtype=np.complex)
+    x = df * np.asarray(x)
+    c = np.asarray(c)
     if x.ndim != 1:
         raise ValueError("Expected one-dimensional input arrays")
     if x.shape != c.shape:
